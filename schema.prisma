@@ -1,0 +1,233 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model games {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  title           String
+  isbn            String?
+  available       Boolean
+  isExtension     Boolean
+  baseGameId      String?  @db.ObjectId
+  releaseDate     DateTime
+  posterImage     String?
+  backgroundImage String?
+  globalRating    Float?
+  likes           Int?
+  dislikes        Int?
+  recommendedAge  Int?
+  playerCount     Json
+  playtime        Float?
+  description     String?
+  mechanics       String[]
+
+  difficultyLevel difficulties @relation(fields: [difficultyLevelId], references: [id])
+  difficultyLevelId String @db.ObjectId
+
+  priceRange price_ranges @relation(fields: [priceRangeId], references: [id])
+  priceRangeId String @db.ObjectId
+
+  categories game_categories[]
+  storesLinks store_links[]
+  collections game_collections[]
+  gameAwards game_awards[]
+  media medias[]
+
+  authors      game_user_authors[]
+  illustrators game_user_illustrators[]
+  publishers   game_user_publishers[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("games")
+}
+
+model awards {
+  id       String @id @default(auto()) @map("_id") @db.ObjectId
+  reference String @unique
+  name     String
+  image    String?
+  gameAwards game_awards[]
+
+  @@map("awards")
+}
+
+model game_awards {
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  game    games @relation(fields: [gameId], references: [id])
+  gameId  String @db.ObjectId
+  award   awards @relation(fields: [awardId], references: [id])
+  awardId String @db.ObjectId
+  year    Int
+
+  @@map("game_awards")
+}
+
+model categories {
+  id          String @id @default(auto()) @map("_id") @db.ObjectId
+  reference   String @unique
+  name        String
+  description String?
+  
+  collections collections[]
+  gameCategories game_categories[]
+
+  @@map("categories")
+}
+
+model game_categories {
+  id         String @id @default(auto()) @map("_id") @db.ObjectId
+  game       games @relation(fields: [gameId], references: [id])
+  gameId     String @db.ObjectId
+  category   categories @relation(fields: [categoryId], references: [id])
+  categoryId String @db.ObjectId
+
+  @@map("game_categories")
+}
+
+model difficulties {
+  id          String @id @default(auto()) @map("_id") @db.ObjectId
+  reference   String @unique
+  name        String
+  description String?
+  level       Int
+  games       games[]
+
+  @@map("difficulties")
+}
+
+model price_ranges {
+  id       String @id @default(auto()) @map("_id") @db.ObjectId
+  reference String @unique
+  name     String
+  level    Int
+  games    games[]
+
+  @@map("price_ranges")
+}
+
+model collections {
+  id         String @id @default(auto()) @map("_id") @db.ObjectId
+  reference  String @unique
+  name       String
+  description String?
+  publishers String[] @db.ObjectId
+  category   categories @relation(fields: [categoryId], references: [id])
+  categoryId String @db.ObjectId
+  imageFolder String?
+  
+  gameCollections game_collections[]
+
+  @@map("collections")
+}
+
+model game_collections {
+  id         String @id @default(auto()) @map("_id") @db.ObjectId
+  game       games @relation(fields: [gameId], references: [id])
+  gameId     String @db.ObjectId
+  collection collections @relation(fields: [collectionId], references: [id])
+  collectionId String @db.ObjectId
+
+  @@map("game_collections")
+}
+
+model medias {
+  id         String @id @default(auto()) @map("_id") @db.ObjectId
+  game       games @relation(fields: [gameId], references: [id])
+  gameId     String @db.ObjectId
+  user       users @relation(fields: [userId], references: [id])
+  userId     String @db.ObjectId
+  mediaType  String
+  thumbnail  String?
+  url        String
+  source     String?
+  description String?
+
+  @@map("medias")
+}
+
+model users {
+  id            String @id @default(auto()) @map("_id") @db.ObjectId
+  pseudo        String @unique
+  email         String @unique
+  firstName     String
+  lastName      String
+  commercialName String?
+  country       String
+  verified      Boolean
+  roles         String[] @default(["standard"])
+  description   String?
+  website       String?
+  instagram     String?
+  twitter       String?
+  avatar        String?
+  hideName      Boolean
+  hideFirstName Boolean
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  games_authored      game_user_authors[]
+  games_illustrated   game_user_illustrators[]
+  games_published     game_user_publishers[]
+  medias              medias[]
+
+  @@map("users")
+}
+
+model stores {
+  id        String @id @default(auto()) @map("_id") @db.ObjectId
+  reference String @unique
+  name      String
+  website   String?
+  logo      String?
+  storeLinks store_links[]
+
+  @@map("stores")
+}
+
+model store_links {
+  id        String @id @default(auto()) @map("_id") @db.ObjectId
+  game      games @relation(fields: [gameId], references: [id])
+  gameId    String @db.ObjectId
+  store     stores @relation(fields: [storeId], references: [id])
+  storeId   String @db.ObjectId
+  url       String
+
+  @@map("store_links")
+}
+
+model game_user_authors {
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  game   games @relation(fields: [gameId], references: [id])
+  gameId String @db.ObjectId
+  user   users @relation(fields: [userId], references: [id])
+  userId String @db.ObjectId
+
+  @@map("game_user_authors")
+}
+
+model game_user_illustrators {
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  game   games @relation(fields: [gameId], references: [id])
+  gameId String @db.ObjectId
+  user   users @relation(fields: [userId], references: [id])
+  userId String @db.ObjectId
+
+  @@map("game_user_illustrators")
+}
+
+model game_user_publishers {
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  game   games @relation(fields: [gameId], references: [id])
+  gameId String @db.ObjectId
+  user   users @relation(fields: [userId], references: [id])
+  userId String @db.ObjectId
+
+  @@map("game_user_publishers")
+}
