@@ -3,12 +3,28 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-export async function GET() {
+export async function GET(req) {
     try {
-        const categories = await prisma.categories.findMany();
+        const { searchParams } = new URL(req.url);
+
+        let filter = {};
+
+        if (searchParams.has("name")) {
+            filter.name = { contains: searchParams.get("name"), mode: "insensitive" };
+        }
+        if (searchParams.has("reference")) {
+            filter.reference = searchParams.get("reference");
+        }
+
+        const categories = await prisma.categories.findMany({
+            where: filter,
+        });
+
         return NextResponse.json(categories, { status: 200 });
     } catch (error) {
-        console.error("Error fetching categories:", error);
-        return NextResponse.json({ error: error.message || "Error retrieving categories" }, { status: 500 });
+        return NextResponse.json(
+            { error: error.message || "Error retrieving categories" },
+            { status: 500 }
+        );
     }
 }

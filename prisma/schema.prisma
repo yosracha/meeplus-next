@@ -49,10 +49,10 @@ model games {
 }
 
 model awards {
-  id       String @id @default(auto()) @map("_id") @db.ObjectId
+  id        String @id @default(auto()) @map("_id") @db.ObjectId
   reference String @unique
-  name     String
-  image    String?
+  name      String
+  image     String?
   gameAwards game_awards[]
 
   @@map("awards")
@@ -74,9 +74,8 @@ model categories {
   reference   String @unique
   name        String
   description String?
-  
-  collections collections[]
   gameCategories game_categories[]
+  collections collections[]
 
   @@map("categories")
 }
@@ -86,7 +85,7 @@ model game_categories {
   game       games @relation(fields: [gameId], references: [id])
   gameId     String @db.ObjectId
   category   categories @relation(fields: [categoryId], references: [id])
-  categoryId String @db.ObjectId
+  categoryId String? @db.ObjectId
 
   @@map("game_categories")
 }
@@ -121,18 +120,17 @@ model collections {
   category   categories @relation(fields: [categoryId], references: [id])
   categoryId String @db.ObjectId
   imageFolder String?
-  
   gameCollections game_collections[]
 
   @@map("collections")
 }
 
 model game_collections {
-  id         String @id @default(auto()) @map("_id") @db.ObjectId
-  game       games @relation(fields: [gameId], references: [id])
-  gameId     String @db.ObjectId
-  collection collections @relation(fields: [collectionId], references: [id])
-  collectionId String @db.ObjectId
+  id            String @id @default(auto()) @map("_id") @db.ObjectId
+  game          games @relation(fields: [gameId], references: [id])
+  gameId        String @db.ObjectId
+  collection    collections? @relation(fields: [collectionId], references: [id])
+  collectionId  String? @db.ObjectId 
 
   @@map("game_collections")
 }
