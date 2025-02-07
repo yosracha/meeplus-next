@@ -105,6 +105,7 @@ export async function POST(req) {
         try {
             body = await req.json();
         } catch (error) {
+            console.log(error)
             return NextResponse.json({ error: "Invalid JSON format in request body" }, { status: 400 });
         }
 
