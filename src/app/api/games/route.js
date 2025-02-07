@@ -100,12 +100,11 @@ export async function GET() {
 
 export async function POST(req) {
     try {
-
         let body;
         try {
             body = await req.json();
         } catch (error) {
-            console.log(error)
+            console.log(error);
             return NextResponse.json({ error: "Invalid JSON format in request body" }, { status: 400 });
         }
 
@@ -114,63 +113,67 @@ export async function POST(req) {
         }
 
         for (const game of body) {
-
             if (!game.title || !game.releaseDate || !game.difficultyLevel || !game.priceRange) {
                 return NextResponse.json({ error: `Game is missing required fields: ${game.title}` }, { status: 400 });
             }
 
-            let gameId = game.id;
-            const insertedGame = await prisma.games.upsert({
-                where: { id: gameId },
-                update: {
-                    releaseDate: new Date(game.releaseDate),
-                    difficultyLevelId: game.difficultyLevel,
-                    priceRangeId: game.priceRange,
-                    playerCount: game.playerCount,
-                    recommendedAge: game.recommendedAge,
-                    playtime: game.playtime,
-                    description: game.description,
-                    isExtension: game.isExtension,
-                    available: game.available,
-                    updatedAt: new Date(),
-                },
-                create: {
-                    id: gameId,
-                    title: game.title,
-                    releaseDate: new Date(game.releaseDate),
-                    difficultyLevelId: game.difficultyLevel,
-                    priceRangeId: game.priceRange,
-                    playerCount: game.playerCount,
-                    recommendedAge: game.recommendedAge,
-                    playtime: game.playtime,
-                    description: game.description,
-                    isExtension: game.isExtension,
-                    available: game.available,
-                    createdAt: new Date(),
-                    updatedAt: new Date(),
-                }
+            let existingGame = await prisma.games.findFirst({
+                where: { title: game.title }
             });
-            if (game.categories && game.categories.length > 0) {
 
+            let insertedGame;
+            if (existingGame) {
+                insertedGame = await prisma.games.update({
+                    where: { id: existingGame.id },
+                    data: {
+                        releaseDate: new Date(game.releaseDate),
+                        difficultyLevelId: game.difficultyLevel,
+                        priceRangeId: game.priceRange,
+                        playerCount: game.playerCount,
+                        recommendedAge: game.recommendedAge,
+                        playtime: game.playtime,
+                        description: game.description,
+                        isExtension: game.isExtension,
+                        available: game.available,
+                        updatedAt: new Date(),
+                    }
+                });
+            } else {
+                insertedGame = await prisma.games.create({
+                    data: {
+                        title: game.title,
+                        releaseDate: new Date(game.releaseDate),
+                        difficultyLevelId: game.difficultyLevel,
+                        priceRangeId: game.priceRange,
+                        playerCount: game.playerCount,
+                        recommendedAge: game.recommendedAge,
+                        playtime: game.playtime,
+                        description: game.description,
+                        isExtension: game.isExtension,
+                        available: game.available,
+                        createdAt: new Date(),
+                        updatedAt: new Date(),
+                    }
+                });
+            }
+
+            if (game.categories && game.categories.length > 0) {
                 await prisma.game_categories.createMany({
                     data: game.categories.map(categoryId => ({
                         gameId: insertedGame.id,
                         categoryId: categoryId
-                    })),
+                    }))
                 });
-
             }
 
             if (game.awards && game.awards.length > 0) {
-
                 await prisma.game_awards.createMany({
                     data: game.awards.map(awardId => ({
                         gameId: insertedGame.id,
                         awardId: awardId,
                         year: new Date().getFullYear()
-                    })),
+                    }))
                 });
-
             }
 
             const creators = [
@@ -180,19 +183,17 @@ export async function POST(req) {
             ];
 
             for (const creator of creators) {
-                if (game.creators[creator.type] && game.creators[creator.type].length > 0) {
+                if (game.creators?.[creator.type]?.length > 0) {
                     await prisma[creator.table].createMany({
                         data: game.creators[creator.type].map(userId => ({
                             gameId: insertedGame.id,
                             userId: userId
-                        })),
+                        }))
                     });
-
                 }
             }
 
             if (game.storesLinks && game.storesLinks.length > 0) {
-
                 await prisma.store_links.createMany({
                     data: game.storesLinks.map(store => ({
                         gameId: insertedGame.id,
@@ -200,11 +201,9 @@ export async function POST(req) {
                         url: store.url
                     }))
                 });
-
             }
 
             if (game.collection && game.collection.length > 0) {
-
                 await prisma.game_collections.createMany({
                     data: game.collection.map(collectionId => ({
                         gameId: insertedGame.id,
@@ -217,11 +216,10 @@ export async function POST(req) {
         return NextResponse.json({ message: "Games and related data inserted/updated successfully" }, { status: 200 });
 
     } catch (error) {
-
+        console.log(error.stack);
         return NextResponse.json({
             error: error.message || "Failed to process games",
             details: error.stack
         }, { status: 500 });
     }
-
 }

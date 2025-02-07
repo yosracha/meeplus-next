@@ -9,7 +9,7 @@ datasource db {
 
 model games {
   id              String   @id @default(auto()) @map("_id") @db.ObjectId
-  title           String
+  title           String   @unique
   isbn            String?
   available       Boolean
   isExtension     Boolean
