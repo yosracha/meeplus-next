@@ -131,8 +131,6 @@ model game_collections {
   gameId        String @db.ObjectId
   collection    collections? @relation(fields: [collectionId], references: [id])
   collectionId  String? @db.ObjectId 
-
-  @@map("game_collections")
 }
 
 model medias {
